@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            flex: 1;
+            margin: 0 10px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-card h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .stat-card .count {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .stat-pending .count { color: #dc3545; }
+        .stat-progress .count { color: #fd7e14; }
+        .stat-resolved .count { color: #28a745; }
+        .stat-total .count { color: #007bff; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .status-pending {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .status-inprogress {
+            color: #fd7e14;
+            font-weight: bold;
+        }
+        .status-resolved {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .filter-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .filter-group select, .filter-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-warning {
+            background-color: #fd7e14;
+            color: white;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .action-btn {
+            margin-right: 5px;
+            padding: 5px 10px;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .pagination a, .pagination span {
+            padding: 8px 16px;
+            margin: 0 4px;
+            border: 1px solid #ddd;
+            text-decoration: none;
+            color: #007bff;
+            border-radius: 4px;
+        }
+        .pagination a:hover {
+            background-color: #f5f5f5;
+        }
+        .pagination .current {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .bulk-actions {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .checkbox-column {
+            width: 30px;
+        }
+        .priority-high {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+        .priority-medium {
+            background-color: rgba(255, 193, 7, 0.1);
+        }
+        .messages {
+            margin-bottom: 20px;
+        }
+        .message {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .message-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .message-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .message-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .message-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Support Representative Dashboard</h2>
+        <div>
+            <span>Welcome, {{ user.username }}</span>
+            <a href="{% url 'logout' %}" style="margin-left: 20px;" class="btn btn-secondary">Logout</a>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="message message-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="stats-container">
+        <div class="stat-card stat-total">
+            <h3>Total Requests</h3>
+            <div class="count">{{ total_requests }}</div>
+        </div>
+        <div class="stat-card stat-pending">
+            <h3>Pending</h3>
+            <div class="count">{{ pending_requests }}</div>
+        </div>
+        <div class="stat-card stat-progress">
+            <h3>In Progress</h3>
+            <div class="count">{{ in_progress_requests }}</div>
+        </div>
+        <div class="stat-card stat-resolved">
+            <h3>Resolved</h3>
+            <div class="count">{{ resolved_requests }}</div>
+        </div>
+    </div>
+
+    <div class="filter-container">
+        <h3>Filter Requests</h3>
+        <form method="get" id="filter-form">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="status">Status:</label>
+                    <select name="status" id="status">
+                        <option value="">All Statuses</option>
+                        {% for status_value, status_label in status_choices %}
+                            <option value="{{ status_value }}" {% if status == status_value %}selected{% endif %}>{{ status_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="priority">Priority:</label>
+                    <select name="priority" id="priority">
+                        <option value="">All Priorities</option>
+                        {% for priority_value, priority_label in priority_choices %}
+                            <option value="{{ priority_value }}" {% if priority == priority_value %}selected{% endif %}>{{ priority_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="service_type">Service Type:</label>
+                    <select name="service_type" id="service_type">
+                        <option value="">All Service Types</option>
+                        {% for service_type_value, service_type_label in service_type_choices %}
+                            <option value="{{ service_type_value }}" {% if service_type == service_type_value %}selected{% endif %}>{{ service_type_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="assigned">Assigned To:</label>
+                    <select name="assigned" id="assigned">
+                        <option value="">All Requests</option>
+                        <option value="me" {% if assigned == 'me' %}selected{% endif %}>Assigned to Me</option>
+                        <option value="unassigned" {% if assigned == 'unassigned' %}selected{% endif %}>Unassigned</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="q">Search:</label>
+                    <input type="text" name="q" id="q" value="{{ q }}" placeholder="Search by customer name, email, or description">
+                </div>
+                <div class="filter-group">
+                    <label for="sort">Sort By:</label>
+                    <select name="sort" id="sort">
+                        <option value="-created_at" {% if sort == '-created_at' %}selected{% endif %}>Newest First</option>
+                        <option value="created_at" {% if sort == 'created_at' %}selected{% endif %}>Oldest First</option>
+                        <option value="-priority" {% if sort == '-priority' %}selected{% endif %}>Highest Priority</option>
+                        <option value="priority" {% if sort == 'priority' %}selected{% endif %}>Lowest Priority</option>
+                        <option value="status" {% if sort == 'status' %}selected{% endif %}>Status (A-Z)</option>
+                        <option value="-status" {% if sort == '-status' %}selected{% endif %}>Status (Z-A)</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+            <a href="{% url 'support_dashboard' %}" class="btn btn-secondary">Clear Filters</a>
+        </form>
+    </div>
+
+    <form method="post" id="bulk-action-form">
+        {% csrf_token %}
+        <div class="bulk-actions">
+            <h3>Bulk Actions</h3>
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="action">Action:</label>
+                    <select name="action" id="action">
+                        <option value="update_status">Update Status</option>
+                        <option value="assign">Assign/Unassign</option>
+                    </select>
+                </div>
+                <div class="filter-group status-action">
+                    <label for="new_status">New Status:</label>
+                    <select name="new_status" id="new_status">
+                        {% for status_value, status_label in status_choices %}
+                            <option value="{{ status_value }}">{{ status_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group assign-action" style="display: none;">
+                    <label for="support_rep">Assign To:</label>
+                    <select name="support_rep" id="support_rep">
+                        <option value="">Unassign</option>
+                        {% for rep in support_reps %}
+                            <option value="{{ rep.id }}" {% if current_support_rep and current_support_rep.id == rep.id %}selected{% endif %}>{{ rep.get_full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Apply to Selected</button>
+                </div>
+            </div>
+        </div>
+
+        <h3>Service Requests</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th class="checkbox-column"><input type="checkbox" id="select-all"></th>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Service Type</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Assigned To</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for request in service_requests %}
+                <tr class="{% if request.priority == 'High' %}priority-high{% elif request.priority == 'Medium' %}priority-medium{% endif %}">
+                    <td class="checkbox-column"><input type="checkbox" name="selected_requests" value="{{ request.id }}" class="request-checkbox"></td>
+                    <td>{{ request.id }}</td>
+                    <td>
+                        {% if request.customer.user.first_name or request.customer.user.last_name %}
+                            {{ request.customer.user.first_name }} {{ request.customer.user.last_name }}
+                        {% else %}
+                            {{ request.customer.user.username }}
+                        {% endif %}
+                    </td>
+                    <td>{{ request.service_type }}</td>
+                    <td>{{ request.priority }}</td>
+                    <td class="status-{{ request.status|lower|cut:' ' }}">{{ request.status }}</td>
+                    <td>
+                        {% if request.assigned_to %}
+                            {{ request.assigned_to.get_full_name }}
+                        {% else %}
+                            <em>Unassigned</em>
+                        {% endif %}
+                    </td>
+                    <td>{{ request.created_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        <a href="{% url 'support_request_detail' request.id %}" class="btn btn-primary action-btn">View</a>
+                        <a href="#" class="btn btn-warning action-btn quick-status" data-id="{{ request.id }}" data-status="In Progress">In Progress</a>
+                        <a href="#" class="btn btn-success action-btn quick-status" data-id="{{ request.id }}" data-status="Resolved">Resolved</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">No service requests found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </form>
+
+    {% if is_paginated %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo; First</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="current">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Last &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <script>
+        // Toggle between status and assign actions
+        document.getElementById('action').addEventListener('change', function() {
+            const statusAction = document.querySelector('.status-action');
+            const assignAction = document.querySelector('.assign-action');
+            
+            if (this.value === 'update_status') {
+                statusAction.style.display = 'block';
+                assignAction.style.display = 'none';
+            } else if (this.value === 'assign') {
+                statusAction.style.display = 'none';
+                assignAction.style.display = 'block';
+            }
+        });
+
+        // Select all checkboxes
+        document.getElementById('select-all').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.request-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+
+        // Quick status update links
+        document.querySelectorAll('.quick-status').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const requestId = this.getAttribute('data-id');
+                const newStatus = this.getAttribute('data-status');
+                
+                // Create a temporary form for the quick action
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = window.location.href;
+                
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                
+                const actionInput = document.createElement('input');
+                actionInput.type = 'hidden';
+                actionInput.name = 'action';
+                actionInput.value = 'update_status';
+                
+                const statusInput = document.createElement('input');
+                statusInput.type = 'hidden';
+                statusInput.name = 'new_status';
+                statusInput.value = newStatus;
+                
+                const requestInput = document.createElement('input');
+                requestInput.type = 'hidden';
+                requestInput.name = 'selected_requests';
+                requestInput.value = requestId;
+                
+                form.appendChild(csrfInput);
+                form.appendChild(actionInput);
+                form.appendChild(statusInput);
+                form.appendChild(requestInput);
+                
+                document.body.appendChild(form);
+                form.submit();
+            });
+        });
+
+        // Auto-submit filter form when select fields change
+        document.querySelectorAll('#filter-form select').forEach(select => {
+            select.addEventListener('change', function() {
+                document.getElementById('filter-form').submit();
+            });
+        });
+    </script>
+</body>
+</html>

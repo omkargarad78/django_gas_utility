@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Service Request Detail</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .request-details {
+        margin-bottom: 30px;
+      }
+      .detail-row {
+        display: flex;
+        border-bottom: 1px solid #eee;
+        padding: 12px 0;
+      }
+      .detail-label {
+        font-weight: bold;
+        width: 180px;
+      }
+      .detail-value {
+        flex: 1;
+      }
+      .status-pending {
+        color: red;
+        font-weight: bold;
+      }
+      .status-progress {
+        color: orange;
+        font-weight: bold;
+      }
+      .status-resolved {
+        color: green;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h2>Service Request #{{ service_request.user_request_id }}</h2>
+        <a href="{% url 'dashboard' %}">Back to Dashboard</a>
+      </div>
+      
+      <div class="request-details">
+        <div class="detail-row">
+          <div class="detail-label">Service Type:</div>
+          <div class="detail-value">{{ service_request.service_type }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Current Status:</div>
+          <div class="detail-value" class="status-{{ service_request.status|lower|cut:' ' }}">{{ service_request.status }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Created:</div>
+          <div class="detail-value">{{ service_request.created_at }}</div>
+        </div>
+        {% if service_request.resolved_at %}
+        <div class="detail-row">
+          <div class="detail-label">Resolved:</div>
+          <div class="detail-value">{{ service_request.resolved_at }}</div>
+        </div>
+        {% endif %}
+        <div class="detail-row">
+          <div class="detail-label">Description:</div>
+          <div class="detail-value">{{ service_request.description }}</div>
+        </div>
+        {% if service_request.attached_file %}
+        <div class="detail-row">
+          <div class="detail-label">Attachment:</div>
+          <div class="detail-value">
+            <a href="{{ service_request.attached_file.url }}" target="_blank">View Attachment</a>
+          </div>
+        </div>
+        {% endif %}
+        
+        {% if service_request.notes %}
+        <div class="detail-row">
+          <div class="detail-label">Support Notes:</div>
+          <div class="detail-value" style="white-space: pre-wrap;">{{ service_request.notes }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </body>
+</html>
